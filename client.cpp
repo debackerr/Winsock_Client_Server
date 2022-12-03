@@ -13,7 +13,17 @@
 #define DEFAULT_BUFLEN 512
 #undef UNICODE
 
+void usage(int argc, char **argv) {
+  printf("Missing IP address\n");
+  printf("usage: %s <v4|v6> \n", argv[0]);
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char **argv) {
+
+    if (argc < 2) {
+        usage(argc, argv);
+    }
 
     WSADATA wsaData;
 
@@ -74,13 +84,17 @@ int main(int argc, char **argv) {
     }
 
     // Exchanging messages:
+    int recvbuflen = DEFAULT_BUFLEN;
+    const char *sendbuf = "Request message";
+    char recvbuf[DEFAULT_BUFLEN];
+
+    int a,b;
+    a = 0; b = 10;
     while(1){
-        int recvbuflen = DEFAULT_BUFLEN;
-        const char *sendbuf = "Juju is testing";
-        char recvbuf[DEFAULT_BUFLEN];
 
         // Send an initial buffer
         iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
+
         if (iResult == SOCKET_ERROR) {
             printf("send failed: %d\n", WSAGetLastError());
             closesocket(ConnectSocket);
@@ -88,19 +102,20 @@ int main(int argc, char **argv) {
             return 1;
         }
         printf("Bytes Sent: %ld\n", iResult);
+        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 
-        // shutdown the connection for sending since no more data will be sent
-        // the client can still use the ConnectSocket for receiving data
-        iResult = shutdown(ConnectSocket, SD_SEND);
-        if (iResult == SOCKET_ERROR) {
-            printf("shutdown failed: %d\n", WSAGetLastError());
-            closesocket(ConnectSocket);
-            WSACleanup();
-            return 1;
-        }
+        while(a < b){
+            sendbuf = "Msg here\n";
+            iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
 
-        // Receive data until the server closes the connection
-        while(1){
+            if (iResult == SOCKET_ERROR) {
+                printf("send failed: %d\n", WSAGetLastError());
+                closesocket(ConnectSocket);
+                WSACleanup();
+                return 1;
+            }
+            printf("Bytes Sent: %ld\n", iResult);
+
             iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
             if (iResult > 0){
                 //APPLICATION RUNS HERE
@@ -112,9 +127,11 @@ int main(int argc, char **argv) {
                 printf("Connection closed\n");
                 break;
             }
-            else
+            else{
                 printf("recv failed: %d\n", WSAGetLastError());
-        }
+            }
+            a++;
+        } 
 
         // shutdown the send half of the connection since no more data will be sent
         iResult = shutdown(ConnectSocket, SD_SEND);

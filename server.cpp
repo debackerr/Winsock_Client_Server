@@ -12,8 +12,17 @@
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
+void usage(int argc, char **argv) {
+  printf("Missing IP address\n");
+  printf("usage: %s <v4|v6> \n", argv[0]);
+  exit(EXIT_FAILURE);
+}
 
 int main(int argc, char **argv) {
+
+  if (argc < 2) {
+        usage(argc, argv);
+  }
 
   WSADATA wsaData;
   int iResult;
@@ -73,6 +82,10 @@ int main(int argc, char **argv) {
   // Temporary socket for accepting connections:
   SOCKET ClientSocket;
   ClientSocket = INVALID_SOCKET;
+
+    int a,b;
+    a = 0; b = 10;
+
   while(1){
     // Accept a client socket
     ClientSocket = accept(ListenSocket, NULL, NULL);
@@ -88,7 +101,7 @@ int main(int argc, char **argv) {
     int iSendResult;
     int recvbuflen = DEFAULT_BUFLEN;
 
-    while(1){
+    while(a<b){
       iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
 
       if (iResult > 0) {
@@ -116,7 +129,7 @@ int main(int argc, char **argv) {
           return 1;
           break;
       }
-
+a++;
     }
     }
   
