@@ -1,7 +1,12 @@
 #define _WIN32_WINNT 0x501
 
 #include "stdafx.h"
-#include "application.h"
+#include "application.cpp"
+#include <iostream>
+
+
+
+using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -14,9 +19,10 @@
 #undef UNICODE
 
 void usage(int argc, char **argv) {
-  printf("Missing IP address\n");
-  printf("usage: %s <v4|v6> \n", argv[0]);
-  exit(EXIT_FAILURE);
+    printf("Missing IP address\n");
+    printf("usage: %s <v4|v6> \n", argv[0]);
+    
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv) {
@@ -84,16 +90,18 @@ int main(int argc, char **argv) {
     }
 
     // Exchanging messages:
+
     int recvbuflen = DEFAULT_BUFLEN;
-    const char *sendbuf = "Request message";
-    char recvbuf[DEFAULT_BUFLEN];
+    //char recvbuf[DEFAULT_BUFLEN];
+    //const char* sendbuf = "Request message!";
 
-    int a,b;
-    a = 0; b = 10;
-    while(1){
+    char buf[DEFAULT_BUFLEN];
+    memset(buf, 0, DEFAULT_BUFLEN);
 
-        // Send an initial buffer
-        iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
+    while(1) {
+
+        /*/ Send an initial buffer
+        iResult = send(ConnectSocket, buf, (int) strlen(buf), 0);
 
         if (iResult == SOCKET_ERROR) {
             printf("send failed: %d\n", WSAGetLastError());
@@ -101,53 +109,45 @@ int main(int argc, char **argv) {
             WSACleanup();
             return 1;
         }
-        printf("Bytes Sent: %ld\n", iResult);
-        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+        printf("Communication running. Bytes Sent: %ld\n", iResult);
+*/
+        printMenu();
 
-        while(a < b){
-            sendbuf = "Msg here\n";
-            iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
+        while(1) {
+            
+            runApp(buf);
+    
+            iResult = send(ConnectSocket, buf, (int) strlen(buf), 0);
 
             if (iResult == SOCKET_ERROR) {
                 printf("send failed: %d\n", WSAGetLastError());
                 closesocket(ConnectSocket);
                 WSACleanup();
                 return 1;
-            }
-            printf("Bytes Sent: %ld\n", iResult);
-
-            iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0){
-                //APPLICATION RUNS HERE
-                printf("Bytes received: %d\n", iResult);
-                //runApp();
-                puts(recvbuf);
-            }
-            else if (iResult == 0){
-                printf("Connection closed\n");
                 break;
             }
-            else{
-                printf("recv failed: %d\n", WSAGetLastError());
-            }
-            a++;
-        } 
+            
+            printf("Bytes Sent: %ld\n", iResult);
 
-        // shutdown the send half of the connection since no more data will be sent
-        iResult = shutdown(ConnectSocket, SD_SEND);
-        if (iResult == SOCKET_ERROR) {
-            printf("shutdown failed: %d\n", WSAGetLastError());
-            closesocket(ConnectSocket);
-            WSACleanup();
-            return 1;
+            iResult = recv(ConnectSocket, buf, recvbuflen, 0);
+            if (iResult > 0){
+                printf("Bytes received: %d\n", iResult);
+                puts(buf);
+            } else if (iResult == 0){
+                printf("Connection closed\n");
+                break;
+            }else{
+                printf("recv failed: %d\n", WSAGetLastError());
+                break;
+            }
         }
+
+        break;   
     }
     
-
     // cleanup
     closesocket(ConnectSocket);
     WSACleanup();
 
     return 0;
-
 }

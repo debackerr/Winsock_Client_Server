@@ -1,7 +1,6 @@
 #define _WIN32_WINNT 0x501
 
 #include "stdafx.h"
-#include "application.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -83,54 +82,65 @@ int main(int argc, char **argv) {
   SOCKET ClientSocket;
   ClientSocket = INVALID_SOCKET;
 
-    int a,b;
-    a = 0; b = 10;
+  char recvbuf[DEFAULT_BUFLEN];
+  int iSendResult;
+  int recvbuflen = DEFAULT_BUFLEN;
 
   while(1){
     // Accept a client socket
     ClientSocket = accept(ListenSocket, NULL, NULL);
+    
     if (ClientSocket == INVALID_SOCKET) {
         printf("accept failed: %d\n", WSAGetLastError());
         closesocket(ListenSocket);
         WSACleanup();
         return 1;
     }
-    closesocket(ListenSocket);
+    printf("New connection accepted..\n");
 
-    char recvbuf[DEFAULT_BUFLEN];
-    int iSendResult;
-    int recvbuflen = DEFAULT_BUFLEN;
-
-    while(a<b){
+    while(true) {
       iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
 
       if (iResult > 0) {
         printf("Bytes received: %d\n", iResult);
         puts(recvbuf);
 
-        // Echo the buffer back to the sender
-        iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-        if (iSendResult == SOCKET_ERROR) {
+        if( recvbuf[0] == 'e'){
+          memset(recvbuf, 0, DEFAULT_BUFLEN);
+          printf("Ending connection...\n");
+          closesocket(ClientSocket);
+          // iSendResult = send(ClientSocket, recvbuf, iResult, 0);
+          exit(0);
+        } else{
+        
+          //mandar msg pro OPC: TCPtoOPC();
+          //fazer verificação de msg. se tudo certo, recvbuf = 'ok'
+          memset(recvbuf, 0, DEFAULT_BUFLEN);
+          iSendResult = send(ClientSocket, recvbuf, iResult, 0);
+          
+          if (iSendResult == SOCKET_ERROR) {
+
             printf("send failed: %d\n", WSAGetLastError());
             closesocket(ClientSocket);
             WSACleanup();
             return 1;
+
+          }else if (iResult == 0){
+
+            printf("Connection closing...\n");
+            break;
+
+          }
         }
-        printf("Bytes sent: %d\n", iSendResult);
-
-      } else if (iResult == 0){
-          printf("Connection closing...\n");
-          break;
-
-      }else {
-          printf("recv failed: %d\n", WSAGetLastError());
-          closesocket(ClientSocket);
-          WSACleanup();
-          return 1;
-          break;
+      } else {
+      printf("recv failed: %d\n", WSAGetLastError());
+      closesocket(ClientSocket);
+      WSACleanup();
+      return 1;
+      break;
       }
-a++;
     }
-    }
-  
+  }
+  closesocket(ClientSocket);
+  WSACleanup();
 }
